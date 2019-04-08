@@ -1,0 +1,32 @@
+
+---
+ - hosts: mongo
+   tasks:
+      - name: expose Mongodb to outer world 
+        copy: src=mongodb.conf dest=/etc/mongodb.conf backup=yes mode=0777
+        become: true
+        notify: restart_mongo
+      - name: root_user creation for mongodb
+        mongodb_user:
+           database: admin 
+           user: root
+           password: root123
+           roles: root
+      - name: Create mongodb user
+        mongodb_user:
+          login_user: root
+          login_password: root123
+          login_port: 27017
+          database: products
+          user: writeuser
+          password: admin123
+          roles: readWrite
+          state: present
+        register: status_user
+      - debug: var=status_user  
+   handlers:
+      - name: Restarting Mongodb
+        service: name=mongodb state=restarted
+        listen: restart_mongo 
+        become: true
+  
